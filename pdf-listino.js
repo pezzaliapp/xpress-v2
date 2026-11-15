@@ -1226,6 +1226,7 @@
 
   const PRINT_SCONTO_KEY = 'xpress_print_show_sconto_v1';
   function printShowSconto() {
+    if (document.documentElement.classList.contains('xp-agent-nodisc')) return false; // listino agenti senza sconti
     const chk = el('togglePrintSconto');
     if (chk) return !!chk.checked;
     try { return localStorage.getItem(PRINT_SCONTO_KEY) === '1'; } catch (_) { return false; }

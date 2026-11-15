@@ -27,3 +27,5 @@
 html.xp-agent #xpLightboxPage{display:none!important}
 @media print{.agent-banner,.agent-toast{display:none!important}}
 @media (max-width: 768px){html.xp-agent #articoli-table td:nth-child(3)::before{content:"Prezzo"}}
+/* listino agenti senza sconti: la colonna Sc.Cliente% non serve */
+html.xp-agent-nodisc #articoli-table [data-col="scontoCliente"]{display:none!important}
