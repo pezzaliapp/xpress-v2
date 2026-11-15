@@ -79,14 +79,18 @@ if ('serviceWorker' in navigator) {
 // Variabili globali
 let listino = [];
 let articoliAggiunti = [];
+// Edizione agenti (file HTML condiviso): listino a prezzi di vendita incorporato
+const XPRESS_AGENT = (() => { try { const el = document.getElementById('xpress-agent-package'); return el ? JSON.parse(el.textContent) : null; } catch (e) { return null; } })();
+const AGENT_MAX_DISC = XPRESS_AGENT ? Math.max(0, Math.min(100, Number(XPRESS_AGENT.maxDisc) || 0)) : 100;
 let autoPopolaCosti = false; // Xpress: di default trasporto/installazione non popolati
 let mostraDettagliServizi = true;
 let currencySymbol = '€'; // Global variable for currency symbol
 
 // New helper function to format currency values
+// Stesso formato dell'Xpress originale (es. 720.00€): solo il simbolo e' configurabile.
 function formatCurrency(num, decimals = 2, trim = false) {
   if (!Number.isFinite(num)) return '';
-  return `${fmtDec(num, decimals, trim)}${currencySymbol}`;
+  return `${(Math.round(num * 100) / 100).toFixed(decimals)}${currencySymbol}`;
 }
 // Make it globally accessible for pdf-listino.js
 window.formatCurrency = formatCurrency;
@@ -392,6 +396,7 @@ async function clearLastCsvPayload() {
 }
 
 async function tryAutoLoadSavedCsvOnStart() {
+  if (XPRESS_AGENT) { listino = XPRESS_AGENT.listino || []; aggiornaListinoSelect(); return; }
   const payload = await loadLastCsvPayload();
   updateSavedCsvInfoUI(payload);
 
@@ -701,12 +706,50 @@ document.addEventListener("DOMContentLoaded", function () {
   // Se l'utente aveva già attivo il flag, applicalo alla tabella caricata
   if (smartSettings.showClientDiscount) applyClientDiscountMode(true);
 
+  if (XPRESS_AGENT) setupAgentEdition();
+
   // Prima render
   renderTabellaArticoli();          // crea righe e input una sola volta
   aggiornaTotaliGenerali();
   applyColumnVisibility();
   updateEquivalentDiscountDisplay();
 });
+
+// -------------------- EDIZIONE AGENTI --------------------
+// Il file HTML condiviso con gli agenti: prezzi di vendita, foto, nessun costo o margine.
+function agentToast(msg) {
+  let t = document.getElementById('agentToast');
+  if (!t) { t = document.createElement('div'); t.id = 'agentToast'; t.className = 'agent-toast'; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(agentToast._t); agentToast._t = setTimeout(() => t.classList.remove('on'), 2200);
+}
+function setupAgentEdition() {
+  document.documentElement.classList.add('xp-agent');
+  // sconto cliente sempre attivo: Sc.1/Sc.2/Marg. (interni) non esistono per l'agente
+  smartSettings.showClientDiscount = true;
+  smartSettings.hideVenduto = true;
+  smartSettings.hideDiff = true;
+  smartSettings.hideDiscounts = true;
+  // trasporto/installazione: le spunte passano nella sezione del listino
+  const ls = document.getElementById('listino-section');
+  ['toggleCosti', 'toggleMostraServizi'].forEach(id => { const i = document.getElementById(id); if (i && ls) ls.appendChild(i.closest('label')); });
+  // sezioni e comandi riservati al titolare
+  ['upload-section', 'pdf-section', 'agenti-section'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
+  ['btnWASenzaMargine', 'btnTXTSenzaMargine', 'btnPrintSenzaMargine'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
+  ['toggleShowClientDiscount', 'toggleHideVenduto', 'toggleHideDiff', 'toggleHideDiscounts'].forEach(id => { const e = document.getElementById(id); const l = e && e.closest('label'); if (l) l.remove(); });
+  // intestazione
+  const a = XPRESS_AGENT, main = document.querySelector('main') || document.body;
+  const box = document.createElement('div');
+  box.className = 'agent-banner';
+  const d = a.createdAt ? new Date(a.createdAt).toLocaleDateString('it-IT') : '';
+  box.innerHTML = `<b></b><span></span>`;
+  box.querySelector('b').textContent = a.title || 'Listino agenti';
+  box.querySelector('span').textContent = `Prezzi di vendita${d ? ' aggiornati al ' + d : ''} · ${(a.listino || []).length} articoli · ${AGENT_MAX_DISC ? 'sconto massimo ' + String(AGENT_MAX_DISC).replace('.', ',') + '%' : 'sconti non consentiti'}`;
+  main.insertBefore(box, main.firstChild);
+  document.title = (a.title || 'Listino') + ' · Listino agenti';
+  // per l'agente il "prezzo lordo" e' il suo prezzo di vendita
+  document.querySelectorAll('th[data-col="prezzoLordo"]').forEach(th => { th.textContent = 'Prezzo'; th.title = 'Prezzo di vendita'; });
+}
 
 // -------------------- SMART CONTROLS --------------------
 function bindSmartControls() {
@@ -1123,7 +1166,7 @@ function computeRow(articolo) {
   let conMargineUnit = 0;    // prezzo venduto al cliente (senza servizi)
 
   if (useClientDiscount) {
-    const scontoCliente = clamp(parseDec(articolo.scontoCliente || 0), 0, 100);
+    const scontoCliente = clamp(parseDec(articolo.scontoCliente || 0), 0, XPRESS_AGENT ? AGENT_MAX_DISC : 100);
     conMargineUnit = roundTwo(prezzoLordo * (1 - scontoCliente / 100));
     totaleNettoUnit = conMargineUnit;
 
@@ -1274,6 +1317,11 @@ function onTableInput(e) {
   } else {
     let v = parseDec(target.value);
     if (field === "sconto" || field === "sconto2" || field === "scontoCliente") v = clamp(v, 0, 100);
+    if (XPRESS_AGENT && field === "scontoCliente" && v > AGENT_MAX_DISC) {
+      v = AGENT_MAX_DISC;
+      target.value = String(AGENT_MAX_DISC).replace('.', ',');
+      agentToast(`Sconto massimo consentito: ${String(AGENT_MAX_DISC).replace('.', ',')}%`);
+    }
     if (field === "margine") v = clamp(v, 0, 99.99);
     if (field === "costoTrasporto" || field === "costoInstallazione" || field === "venduto") v = Math.max(0, v);
 
@@ -1378,8 +1426,10 @@ function aggiornaTotaliGenerali() {
       const i = riga.lastIndexOf(':');
       html += `<strong>${riga.slice(0, i + 1)}</strong>${riga.slice(i + 1)}<br>`;
     });
-    html += `<strong>Totale Venduto:</strong> ${formatCurrency(totaleVenduto)}<br>`;
-    html += `<strong>Totale Differenza Sconto:</strong> ${formatCurrency(totaleDifferenzaSconto)}`;
+    if (!XPRESS_AGENT) {
+      html += `<strong>Totale Venduto:</strong> ${formatCurrency(totaleVenduto)}<br>`;
+      html += `<strong>Totale Differenza Sconto:</strong> ${formatCurrency(totaleDifferenzaSconto)}`;
+    }
   } else {
     const d = descriviServizi(totTr, totIns);
     const nota = [d.inclusi, d.esclusi].filter(Boolean).join(', ');

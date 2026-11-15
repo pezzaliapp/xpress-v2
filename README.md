@@ -94,5 +94,8 @@ Nella sezione **Listino per gli agenti** (si apre da sola dopo aver caricato il 
 3. Sconto massimo che gli agenti possono applicare e titolo del listino.
 
 L'anteprima mostra lordo, costo, vendita e margine (solo a te) e avvisa se qualche articolo finisce sopra il listino o sotto costo.
-**Crea listino HTML per gli agenti** genera un file unico che funziona offline: ricerca, preventivo, trasporto/installazione opzionali, stampa/PDF e condivisione.
-Nel file ci sono **solo i prezzi di vendita** (arrotondati all'euro, sotto i 10 € ai 10 centesimi): niente prezzo lordo, costo o margine.
+
+**Crea listino agenti (HTML)** genera un unico file `.html` da condividere: dentro c'è **Xpress completo** (ricerca, tabella, trasporto/installazione, report WhatsApp/TXT, stampa con immagini) con il listino a prezzi di vendita e, se è caricato il listino PDF, le foto dei prodotti. Si apre da solo nel browser, anche offline.
+
+Nell'edizione agenti: il prezzo mostrato è quello di vendita; Sc.1, Sc.2, Marg.%, Vend. e Diff. non esistono; l'agente applica solo lo **sconto cliente** fino al massimo impostato; non ci sono caricamento listini, PDF, pagina intera né i report "No Marg.".
+Nel file non ci sono prezzo lordo, costo, margine né il PDF. Le librerie di importazione (Excel, CSV, PDF) non sono incluse.
