@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html data-app="Xpress" data-ver="2.0.13" lang="it">
+<html data-app="Xpress" data-ver="2.0.16" lang="it">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
@@ -43,7 +43,8 @@
     }
   </style>
 
-<meta content="yes" name="apple-mobile-web-app-capable"/><meta content="yes" name="mobile-web-app-capable"/><meta content="default" name="apple-mobile-web-app-status-bar-style"/><meta content="Xpress" name="apple-mobile-web-app-title"/><meta content="telephone=no" name="format-detection"/><link href="icon/CSVXpressSmart-1024.png" rel="apple-touch-icon"/><link href="icon/CSVXpressSmart-192.png" rel="icon" sizes="192x192" type="image/png"/><link href="icon/CSVXpressSmart-512.png" rel="icon" sizes="512x512" type="image/png"/></head>
+<meta content="yes" name="apple-mobile-web-app-capable"/><meta content="yes" name="mobile-web-app-capable"/><meta content="default" name="apple-mobile-web-app-status-bar-style"/><meta content="Xpress" name="apple-mobile-web-app-title"/><meta content="telephone=no" name="format-detection"/><link href="icon/CSVXpressSmart-1024.png" rel="apple-touch-icon"/><link href="icon/CSVXpressSmart-192.png" rel="icon" sizes="192x192" type="image/png"/><link href="icon/CSVXpressSmart-512.png" rel="icon" sizes="512x512" type="image/png"/><link href="listino-agenti.css" rel="stylesheet"/>
+</head>
 <body>
 <header data-zone="header">
 <div class="logo-container">
@@ -103,6 +104,26 @@
 <button id="btnAddFromListino" onclick="aggiungiArticoloDaListino()">Aggiungi Articolo</button>
 <div class="xp-preview" id="pdfPreview" hidden=""></div>
 </section>
+<details data-zone="listino_agenti" id="agenti-section" class="agenti">
+<summary><h2>Listino per gli agenti</h2></summary>
+<p class="agenti-hint" id="agentiAsk" hidden><b>Listino caricato.</b> Vuoi preparare il listino per gli agenti? Imposta sconti d'acquisto e margine qui sotto.</p>
+<p class="agenti-hint">Calcola i prezzi di vendita e crea un unico file HTML da condividere con gli agenti: dentro c'è <b>Xpress completo</b> (ricerca, tabella, trasporto/installazione, report WhatsApp/TXT, stampa con immagini) con il listino già impostato. Si apre da solo, anche offline. Nel file ci sono <b>solo i prezzi di vendita</b>: niente prezzo lordo, costo, margine, PDF o pagina intera. Le foto ci sono se hai caricato il listino PDF.</p>
+<div class="agenti-grid">
+<label>Sconto 1 d'acquisto %<input id="agS1" type="text" inputmode="decimal" placeholder="Es. 50"></label>
+<label>Sconto 2 d'acquisto %<input id="agS2" type="text" inputmode="decimal" placeholder="Es. 10"></label>
+</div>
+<div class="agenti-seg" role="group" aria-label="Come calcolo il prezzo di vendita">
+<button type="button" data-agmode="margin">Margine</button><button type="button" data-agmode="markup">Ricarico</button><button type="button" data-agmode="list">Sconto listino</button>
+</div>
+<div class="agenti-grid">
+<label><span id="agValueLbl">Margine %</span><input id="agValue" type="text" inputmode="decimal" placeholder="Es. 30"></label>
+<label>Sconto massimo agenti %<input id="agMax" type="text" inputmode="decimal" placeholder="0 = nessuno"></label>
+</div>
+<label class="agenti-full">Titolo del listino<input id="agTitle" type="text" placeholder="Es. Listino Cormach 2026"></label>
+<p class="agenti-hint">Prezzi arrotondati all'euro (sotto i 10 € ai 10 centesimi).</p>
+<div id="agentiPreview"></div>
+<button id="btnAgentiExport" type="button" class="agenti-btn">Crea listino agenti (HTML)</button>
+</details>
 <section data-zone="tabella_articoli" id="articoli-section">
 <h2>Articoli Aggiunti</h2>
 <!-- CONTROLLI SMART -->
@@ -216,6 +237,8 @@
 </noscript>
 <!-- App -->
 <script defer="" src="app.js"></script>
+<!-- Listino per gli agenti (preconfiguratore prezzi + HTML offline) -->
+<script defer="" src="listino-agenti.js"></script>
 <!-- Benvenuto + recupero listino da CSVXpressSmart (dopo app.js) -->
 <script defer="" src="welcome.js"></script>
 </body>

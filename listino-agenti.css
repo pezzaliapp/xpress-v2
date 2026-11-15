@@ -1,0 +1,29 @@
+/* Xpress · Listino per gli agenti */
+.agenti{background:#fff;border:1px solid #dde3e8;border-radius:12px;padding:12px 16px;margin:16px 0}
+.agenti summary{cursor:pointer;list-style:none}.agenti summary::-webkit-details-marker{display:none}
+.agenti summary h2{display:inline;margin:0}.agenti summary::after{content:" ▾";color:#888}
+.agenti.agenti-evidenzia{border:2px solid #e65100}
+.agenti-hint{color:#555;font-size:14px;margin:8px 0}
+.agenti-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.agenti label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#555}
+.agenti-full{margin:8px 0}
+.agenti input{font:inherit;font-size:16px;padding:10px;border:1px solid #c9d1d8;border-radius:8px}
+.agenti-seg{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #c9d1d8;border-radius:8px;overflow:hidden;margin:8px 0}
+.agenti-seg button{border:0;background:#fff;padding:10px 6px;font:inherit;font-weight:600;cursor:pointer}
+.agenti-seg button.on{background:#18222b;color:#fff}
+.agenti-row{border:1px solid #e3e8ec;border-radius:8px;padding:8px 10px;margin:6px 0;font-size:14px}
+.agenti-row span{color:#555;font-size:13px}
+.agenti-warn{color:#b54708;font-size:13px}.agenti-err{color:#b42318;font-size:13px}
+.agenti-btn{margin-top:10px;width:100%;padding:12px;font-size:16px;font-weight:700;border:0;border-radius:10px;background:#e65100;color:#fff;cursor:pointer}
+.agenti-btn:disabled{opacity:.5;cursor:default}
+@media (max-width:520px){.agenti-grid{grid-template-columns:1fr}}
+@media print{.agenti{display:none!important}}
+
+/* edizione agenti (file HTML condiviso) */
+.agent-banner{background:#18222b;color:#fff;border-radius:12px;padding:12px 16px;margin:12px 0;display:flex;flex-direction:column;gap:2px}
+.agent-banner b{font-size:18px}.agent-banner span{font-size:13px;opacity:.8}
+.agent-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#18222b;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9999}
+.agent-toast.on{opacity:1}
+html.xp-agent #xpLightboxPage{display:none!important}
+@media print{.agent-banner,.agent-toast{display:none!important}}
+@media (max-width: 768px){html.xp-agent #articoli-table td:nth-child(3)::before{content:"Prezzo"}}

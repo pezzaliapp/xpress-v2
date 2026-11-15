@@ -94,6 +94,11 @@
   // -------------------- UTIL --------------------
   // Chiave di confronto codice: maiuscolo, solo lettere/cifre, senza zeri iniziali
   // (Excel spesso toglie gli zeri iniziali: 01100313 -> 1100313)
+  // Edizione agenti: immagini gia' pronte nel file HTML (nessun PDF, nessuna pagina intera)
+  const AGENT_PKG = (() => { try { const e = document.getElementById('xpress-agent-package'); return e ? JSON.parse(e.textContent) : null; } catch (_) { return null; } })();
+  const hasImgs = () => !!(state.index || state.images);
+  if (AGENT_PKG && AGENT_PKG.images) state.images = AGENT_PKG.images;
+
   function normCode(c) {
     const s = String(c ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     return s.replace(/^0+(?=.)/, '');
@@ -646,6 +651,7 @@
 
   // Miniatura del prodotto per un codice -> dataURL o null
   function getThumb(code, pagine) {
+    if (state.images) { const i = state.images.byCode[normCode(code)]; return Promise.resolve(i != null ? state.images.list[i] : null); }
     if (!state.index || !state.meta) return Promise.resolve(null);
     const key = normCode(code);
     if (!key) return Promise.resolve(null);
@@ -679,6 +685,7 @@
   }
 
   function pageOf(code, pagine) {
+    if (state.images) return null;
     const r = resolve(code, pagine);
     return r ? r.p : null;
   }
@@ -744,6 +751,7 @@
   }
 
   async function restore() {
+    if (AGENT_PKG) return; // edizione agenti: niente PDF salvato
     try {
       const [meta, bytes, index] = await Promise.all([kvGet(KEY_META), kvGet(KEY_PDF), kvGet(KEY_INDEX)]);
       if (!meta || !bytes) { updateInfoUI(); return; }
@@ -794,7 +802,7 @@
 
   function fillThumb(imgWrap, code, pagine) {
     if (!imgWrap) return;
-    if (!state.index) { imgWrap.hidden = true; return; }
+    if (!hasImgs()) { imgWrap.hidden = true; return; }
     imgWrap.hidden = false;
     imgWrap.classList.add('xp-thumb--loading');
     getThumb(code, pagine).then(url => {
@@ -842,7 +850,7 @@
       txt.textContent = code;
       td.textContent = '';
       wrap.appendChild(txt);
-      if (state.index && code) wrap.appendChild(makeThumbButton(code, art.pagine));
+      if (hasImgs() && code) wrap.appendChild(makeThumbButton(code, art.pagine));
       td.appendChild(wrap);
     });
   }
@@ -852,7 +860,7 @@
     const select = el('listinoSelect');
     if (!box || !select) return;
     const code = select.value;
-    if (!state.index || !code) { box.hidden = true; box.innerHTML = ''; return; }
+    if (!hasImgs() || !code) { box.hidden = true; box.innerHTML = ''; return; }
 
     const art = (typeof listino !== 'undefined') ? listino.find(i => i.codice === code) : null;
     const pagine = art ? art.pagine : '';
@@ -863,7 +871,7 @@
     const cap = document.createElement('div');
     cap.className = 'xp-preview-cap';
     const p = pageOf(code, pagine);
-    cap.textContent = p ? `${code} • listino PDF pag. ${p}` : `${code} • non trovato nel listino PDF`;
+    cap.textContent = state.images ? code : (p ? `${code} • listino PDF pag. ${p}` : `${code} • non trovato nel listino PDF`);
     box.appendChild(btn);
     box.appendChild(cap);
   }
@@ -1058,7 +1066,7 @@
     } else {
       const n = items.length;
       for (let i = 0; i < n; i++) {
-        const url = state.index ? await getThumb(items[i].codice, items[i].pagine).catch(() => null) : null;
+        const url = hasImgs() ? await getThumb(items[i].codice, items[i].pagine).catch(() => null) : null;
         const lines = doc.splitTextToSize(parts[i + 1], textW);
         const rowH = Math.max(PIC, lines.length * LH) + 6;
         if (y + rowH > H - M) { doc.addPage(); y = M; }
@@ -1157,7 +1165,7 @@
       area.appendChild(pre);
     } else {
       const thumbs = await Promise.all(items.map(a =>
-        state.index ? getThumb(a.codice, a.pagine).catch(() => null) : Promise.resolve(null)));
+        hasImgs() ? getThumb(a.codice, a.pagine).catch(() => null) : Promise.resolve(null)));
 
       for (let i = 0; i < n; i++) {
         const row = document.createElement('div');
