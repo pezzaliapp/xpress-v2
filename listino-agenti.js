@@ -144,8 +144,16 @@
       const name = 'listino-agenti-' + new Date().toISOString().slice(0, 10) + '.html';
       const file = new File([html], name, { type: 'text/html' });
       btn.textContent = label;
-      try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Listino agenti' }); return; } }
-      catch (e) { if (e && e.name === 'AbortError') return; }
+      // Su computer il menu Condividi (macOS/Windows) non offre "Salva": scarico direttamente.
+      // Condivido solo su telefono/tablet, dove salvare in File passa dal menu Condividi.
+      const ua = navigator.userAgent || '';
+      const mobile = (navigator.userAgentData && navigator.userAgentData.mobile) ||
+        /Android|iPhone|iPad|iPod/i.test(ua) ||
+        (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); // iPadOS si presenta come Mac
+      if (mobile) {
+        try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Listino agenti' }); return; } }
+        catch (e) { if (e && e.name === 'AbortError') return; }
+      }
       const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name;
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
     } catch (e) { alert('Non sono riuscito a creare il listino: ' + (e.message || e)); }
