@@ -737,6 +737,13 @@ function setupAgentEdition() {
   ['upload-section', 'pdf-section', 'agenti-section'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
   ['btnWASenzaMargine', 'btnTXTSenzaMargine', 'btnPrintSenzaMargine'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
   ['toggleShowClientDiscount', 'toggleHideVenduto', 'toggleHideDiff', 'toggleHideDiscounts'].forEach(id => { const e = document.getElementById(id); const l = e && e.closest('label'); if (l) l.remove(); });
+  // sconti non consentiti: niente colonna Sc.Cliente%, niente "Sconto eq. cliente", niente sconto in stampa
+  if (!AGENT_MAX_DISC) {
+    document.documentElement.classList.add('xp-agent-nodisc');
+    const eq = document.getElementById('smartEquivalentDiscount'); const info = eq && eq.closest('.smart-info'); if (info) info.remove();
+    const ps = document.getElementById('togglePrintSconto');
+    if (ps) { ps.checked = false; const l = ps.closest('label'); if (l) l.remove(); }
+  }
   // intestazione
   const a = XPRESS_AGENT, main = document.querySelector('main') || document.body;
   const box = document.createElement('div');
