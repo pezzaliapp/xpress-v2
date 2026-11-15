@@ -84,3 +84,15 @@ MIT — vedi [LICENSE](LICENSE).
 ## Autore
 
 Alessandro Pezzali — https://www.alessandropezzali.it
+
+## Listino per gli agenti
+
+Nella sezione **Listino per gli agenti** (si apre da sola dopo aver caricato il listino CSV/Excel):
+
+1. Sconto 1 e Sconto 2 d'acquisto (stessa logica in cascata di Xpress).
+2. Come calcolare il prezzo di vendita: **margine** sul prezzo di vendita, **ricarico** sul costo oppure **sconto** al cliente sul listino.
+3. Sconto massimo che gli agenti possono applicare e titolo del listino.
+
+L'anteprima mostra lordo, costo, vendita e margine (solo a te) e avvisa se qualche articolo finisce sopra il listino o sotto costo.
+**Crea listino HTML per gli agenti** genera un file unico che funziona offline: ricerca, preventivo, trasporto/installazione opzionali, stampa/PDF e condivisione.
+Nel file ci sono **solo i prezzi di vendita** (arrotondati all'euro, sotto i 10 € ai 10 centesimi): niente prezzo lordo, costo o margine.

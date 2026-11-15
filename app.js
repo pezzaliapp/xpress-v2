@@ -964,6 +964,7 @@ function finalizeListino(rawRows, file) {
   hideCsvError();
   updateCsvLoadStatus(loaded, ignored);
   aggiornaListinoSelect();
+  if (window.XpressAgenti) window.XpressAgenti.dopoCaricamento();
 }
 
 const CSV_ERROR_DEFAULT = "Errore nel caricamento del file. Formati supportati: CSV, XLSX, XLSM, XLS.";
@@ -996,6 +997,7 @@ function updateCsvLoadStatus(loaded, ignored) {
 }
 
 function aggiornaListinoSelect() {
+  if (window.XpressAgenti) setTimeout(() => window.XpressAgenti.aggiorna(), 0);
   const select = document.getElementById("listinoSelect");
   const search = document.getElementById("searchListino");
   if (!select) return;
