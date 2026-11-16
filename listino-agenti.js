@@ -19,7 +19,13 @@
   function save(c) { try { localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) { /* */ } }
   let cfg = load();
 
-  function round(p) { if (!isFinite(p) || p <= 0) return 0; return p < 10 ? Math.round(p * 10) / 10 : Math.round(p); }
+  // margine/ricarico: arrotondo per eccesso, così il prezzo non scende mai sotto il costo
+  // sconto sul listino: arrotondamento normale
+  function round(p, up) {
+    if (!isFinite(p) || p <= 0) return 0;
+    if (up) return p < 10 ? Math.ceil(p * 10 - 1e-6) / 10 : Math.ceil(p - 1e-6);
+    return p < 10 ? Math.round(p * 10) / 10 : Math.round(p);
+  }
   function check(c) {
     const s1 = num(c.s1 || 0), s2 = num(c.s2 || 0), v = num(c.value);
     if (!(s1 >= 0 && s1 < 100) || !(s2 >= 0 && s2 < 100)) return 'Gli sconti d\'acquisto devono essere tra 0 e 99.';
@@ -33,7 +39,8 @@
     const cost = lordo * (1 - (num(c.s1) || 0) / 100) * (1 - (num(c.s2) || 0) / 100);
     const v = num(c.value) / 100;
     let sell = c.mode === 'margin' ? cost / (1 - v) : c.mode === 'markup' ? cost * (1 + v) : lordo * (1 - v);
-    sell = round(sell);
+    // margine/ricarico 0 = listino netto: prezzo esatto al centesimo, senza arrotondamenti
+    sell = c.mode !== 'list' && !(v > 0) ? Math.round(sell * 100) / 100 : round(sell, c.mode !== 'list');
     return { list: lordo, cost, sell, margin: sell > 0 ? (sell - cost) / sell * 100 : 0 };
   }
   const items = () => (typeof listino !== 'undefined' && Array.isArray(listino)) ? listino : [];
@@ -47,12 +54,12 @@
     const err = check(cfg);
     if (err) { box.innerHTML = '<p class="agenti-hint">' + escH(err) + '</p>'; return; }
     const sample = [0, .25, .5, .75, 1].map(f => L[Math.floor(f * (L.length - 1))]).filter((p, i, a) => p && a.indexOf(p) === i);
-    let over = 0, low = 0;
-    for (const a of L) { const r = price(lordoOf(a), cfg); if (r.sell > r.list + 0.5) over++; if (r.sell < r.cost) low++; }
+    let over = 0, low = 0; const lowL = [];
+    for (const a of L) { const r = price(lordoOf(a), cfg); if (r.sell > r.list + 0.5) over++; if (r.sell < r.cost - 0.005) { low++; if (lowL.length < 5) lowL.push(a.codice); } }
     box.innerHTML = '<p class="agenti-hint"><b>Anteprima (solo per te)</b> · ' + L.length + ' articoli</p>' +
       sample.map(a => { const r = price(lordoOf(a), cfg); return '<div class="agenti-row"><b>' + escH(a.codice) + '</b> ' + escH(String(a.descrizione).slice(0, 48)) + '<br><span>Lordo ' + money(r.list) + ' · costo ' + money(r.cost) + ' · <b>vendita ' + money(r.sell) + '</b> · margine ' + (Math.round(r.margin * 10) / 10).toString().replace('.', ',') + '%</span></div>'; }).join('') +
       (over ? '<p class="agenti-warn">Attenzione: ' + over + ' articoli avrebbero un prezzo sopra il listino.</p>' : '') +
-      (low ? '<p class="agenti-err">Attenzione: ' + low + ' articoli verrebbero venduti sotto costo.</p>' : '');
+      (low ? '<p class="agenti-err">Attenzione: ' + low + ' articoli verrebbero venduti sotto costo' + (lowL.length ? ' (' + escH(lowL.join(', ')) + (low > lowL.length ? '…' : '') + ')' : '') + '.</p>' : '');
   }
 
   // Foto dal listino PDF (se caricato): ridotte e senza doppioni, per tenere il file leggero
