@@ -2,7 +2,7 @@
 // Xpress — Service Worker
 // PWA statica: nessuna richiesta a servizi esterni, tutto same-origin.
 // Versione: bumpare SEMPRE quando cambiano gli asset.
-const CACHE_VERSION = 'v2.0.18';
+const CACHE_VERSION = 'v2.1.0';
 const CACHE_NAME = `xpress-${CACHE_VERSION}`;
 
 // Asset locali da cacheare (app shell)
@@ -18,6 +18,10 @@ const APP_SHELL = [
   './welcome.js',
   './listino-agenti.js',
   './listino-agenti.css',
+  './trasporti.js',
+  './trasporti.css',
+  './trasporti-dati.js',
+  './trasporti-comuni.js',
   './manifest.json',
   './icon/CSVXpressSmart-192.png',
   './icon/CSVXpressSmart-512.png',
@@ -91,6 +95,9 @@ self.addEventListener('fetch', event => {
     event.respondWith(navigationHandler(event));
     return;
   }
+
+  // Tariffe dell'app Calcolo trasporti (stesso sito): sempre dalla rete, mai dalla cache
+  if (url.pathname.includes('/calcolo-trasporti/')) return;
 
   // Asset same-origin: cache-first (la cache è versionata, niente stallo)
   if (url.origin === self.location.origin) {
