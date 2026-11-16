@@ -25,3 +25,13 @@
 .tr-avviso{margin:10px 0 0;padding:8px 12px;border-left:4px solid #e65100;background:#fff4e5;color:#5d3a00;font-size:13px;border-radius:6px}
 .xp-disclaimer{margin:16px 0 0;color:#666;font-size:12px;line-height:1.4}
 @media print{.xp-disclaimer{display:none}}
+.tr-alt{border:1px solid #f0c27a;background:#fffaf0;border-radius:10px;padding:8px 12px;margin:8px 0}
+.tr-alt>b{display:block;font-size:14px;margin-bottom:4px}
+.tr-alt-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed #f0d9b0;font-size:14px}
+.tr-alt-row:last-of-type{border-bottom:0}
+.tr-alt-row.on{font-weight:600}
+.tr-alt-row small{color:#1b6e3a;font-weight:600;margin-left:6px}
+.tr-alt p{margin:6px 0 0;font-size:12px;color:#5d3a00}
+#trasporto-section .tr-usa{border:1px solid #1565c0;background:#fff;color:#1565c0;border-radius:8px;padding:4px 10px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;width:auto;min-height:0;margin:0;box-shadow:none}
+.tr-usata{font-size:12px;color:#1b6e3a;white-space:nowrap}
+#trasporto-section .tr-usa:hover{background:#e8f0fb;color:#1565c0}

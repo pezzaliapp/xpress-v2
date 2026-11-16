@@ -1290,7 +1290,7 @@
 
   // Avvertenze in fondo a ogni report (WhatsApp, TXT, stampa/PDF)
   const AVVERTENZE = [
-    'Nota: trasporto e installazione sono stime indicative e vanno sempre verificati in fase d\'ordine.',
+    'Nota: trasporto e installazione sono stime indicative: vanno sempre verificati dal nostro ufficio in caso di conferma d\'ordine.',
     'Prezzi, descrizioni e immagini provengono dai listini caricati: eventuali errori o refusi non sono vincolanti.'
   ];
   window.XPRESS_AVVERTENZE = AVVERTENZE;

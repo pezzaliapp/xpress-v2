@@ -38,7 +38,7 @@
   let ART = new Map(D.articoli.map((a) => [a.id, a]));
 
   /* ---------------- impostazioni (salvate sul dispositivo) ---------------- */
-  const S = Object.assign({ reg: '', prov: '', luogo: '', auto: true, inst: false, pre: false, ass: false, dis: false, disEur: 0 }, (() => {
+  const S = Object.assign({ reg: '', prov: '', luogo: '', auto: true, inst: false, modo: 'auto', pre: false, ass: false, dis: false, disEur: 0 }, (() => {
     try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; }
   })());
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* */ } };
@@ -149,6 +149,7 @@
         sub += v; n += x.pal.length * x.qty;
         const lab = x.pal.length === 1 ? `pallet ${x.pal[0].type}${!x.pal[0].fixed && x.pal[0].pct ? ' +' + x.pal[0].pct + '%' : ''}` : `${x.pal.length} colli su pallet`;
         R.lines.push({ t: `${x.qty > 1 ? x.qty + ' × ' : ''}${x.art.nome}`, s: lab, v: r2(v) });
+        if (x.pal.some((pl) => !pl.fixed && pl.pct)) R.ovs = true;
       }
       if (magg) { const m = sub * magg / 100; sub += m; R.lines.push({ t: `Adeguamento tariffe trasportatori +${itN(magg)}%`, v: r2(m), minor: true }); }
       const sped = Math.ceil(n / reg0.maxPalletPerSpedizione);
@@ -185,17 +186,35 @@
     R.raw = tot; R.total = rounded; R.ok = true;
     return R;
   }
-  /* come l'app Calcolo trasporti: tre soluzioni, si propone la più conveniente */
-  function compute(cart) {
-    const all = ['auto', 'groupage', 'pallet'].map((m) => computeMode(cart, m));
+  /* tre soluzioni, come l'app Calcolo trasporti: pallet e groupage separati, tutto in groupage, tutto su pallet */
+  const MODI = { auto: 'Pallet e groupage separati', groupage: 'Tutto in groupage', pallet: 'Tutto su pallet' };
+  function soluzioni(cart) {
+    const all = ['auto', 'groupage', 'pallet'].map((m) => Object.assign(computeMode(cart, m), { modo: m }));
     const valid = all.filter((R) => R.ok && !R.notes.length);
+    // tengo solo le soluzioni davvero diverse (stesso servizio = stessa soluzione)
+    const out = [];
+    for (const R of valid) {
+      const key = [...R.used].sort().join('+');
+      if (!out.some((x) => [...x.used].sort().join('+') === key && Math.abs(x.total - R.total) < 0.5)) out.push(R);
+    }
+    return { all, valid: out };
+  }
+  const descrSoluzione = (R) => (R.used.size > 1 ? MODI.auto : R.used.has('groupage') ? MODI.groupage : MODI.pallet);
+  /* soluzione usata: la più conveniente, oppure quella scelta (tutto su pallet / tutto in groupage) */
+  function compute(cart, modo) {
+    const { all, valid } = soluzioni(cart);
     if (!valid.length) return all.find((R) => R.notes.length) || all[0];
-    const best = valid.reduce((a, b) => (b.total < a.total - 0.005 ? b : a), valid[0]);
+    const cheapest = valid.reduce((a, b) => (b.total < a.total - 0.005 ? b : a), valid[0]);
+    let best = cheapest;
+    if (modo === 'pallet' || modo === 'groupage') best = valid.find((R) => R.used.has(modo) && R.used.size === 1) || cheapest;
+    else if (modo === 'misto') best = valid.find((R) => R.used.size > 1) || cheapest;
+    best.alternative = valid;
+    best.cheapest = cheapest;
     const arts = cart.map((x) => x.art);
     const noSp = arts.filter((a) => a.noSponda).map((a) => a.nome);
     if (noSp.length) best.infos.push(`Scarico senza sponda idraulica per ${noSp.join(', ')}: a destino serve un mezzo di sollevamento.`);
     const prev = arts.filter((a) => a.preventivo).map((a) => a.nome);
-    if (prev.length && (best.used.has('groupage'))) best.infos.push(`${prev.join(', ')}: prodotto di grandi dimensioni, stima da confermare con il trasportatore.`);
+    if (prev.length && (best.used.has('groupage') || best.ovs)) best.infos.push(`${prev.join(', ')}: prodotto di grandi dimensioni, stima da confermare con il trasportatore.`);
     return best;
   }
 
@@ -229,10 +248,11 @@
 
     // trasporto della spedizione unica, ripartito sulle righe
     if (S.reg && res.cart.length) {
-      const R = compute(res.cart.map((x) => ({ art: x.art, qty: x.qty })));
+      const R = compute(res.cart.map((x) => ({ art: x.art, qty: x.qty })), S.modo);
       res.tr = R;
       if (R.ok) {
-        const w = res.cart.map((x) => { const s = compute([{ art: x.art, qty: x.qty }]); return s.ok ? s.raw : 0; });
+        const svc = R.used.size === 1 ? [...R.used][0] : 'auto';
+        const w = res.cart.map((x) => { const s = computeMode([{ art: x.art, qty: x.qty }], svc); return s.ok ? s.raw : 0; });
         const W = w.reduce((s, v) => s + v, 0);
         let assegnato = 0;
         res.cart.forEach((x, k) => {
@@ -335,6 +355,14 @@
         h += `<p class="tr-hint">Destinazione <b>${esc(destLabel())}</b>.</p>`;
       }
       const notes = [];
+      if (R && R.ok && R.alternative && R.alternative.length > 1) {
+        h += '<div class="tr-alt"><b>Confronto tra i servizi</b>' + R.alternative.map((x) => {
+          const usata = x === R;
+          const conv = x === R.cheapest ? ' <small>più conveniente</small>' : '';
+          const btn = usata ? '<span class="tr-usata">nel preventivo</span>' : `<button type="button" class="tr-usa" data-i="${R.alternative.indexOf(x)}">Usa questo</button>`;
+          return `<div class="tr-alt-row${usata ? ' on' : ''}"><span>${esc(descrSoluzione(x))}${conv}</span><b>${eur(x.total)}</b>${btn}</div>`;
+        }).join('') + '<p>Prezzi indicativi per entrambi i servizi: il servizio e il costo definitivi vanno sempre verificati dal nostro ufficio in caso di conferma d\'ordine.</p></div>';
+      }
       if (R && R.ok) R.notes.forEach((n) => notes.push(['warn', n]));
       if (R) R.infos.forEach((n) => notes.push(['', n]));
       if (res.incl.length) notes.push(['ok', `Trasporto incluso per ${res.incl.map(nomeRiga).join(', ')}.`]);
@@ -468,6 +496,13 @@
     });
     $('trDisEur').addEventListener('input', (e) => { S.disEur = Math.max(0, num(e.target.value)); save(); ricalcolaTutto(); });
     $('trEsito').addEventListener('click', (e) => {
+      const u = e.target.closest('.tr-usa');
+      if (u) {
+        const R = LAST && LAST.tr, x = R && R.alternative && R.alternative[+u.dataset.i];
+        if (!x) return;
+        S.modo = x === R.cheapest ? 'auto' : x.used.size > 1 ? 'misto' : [...x.used][0];
+        save(); ricalcolaTutto(); return;
+      }
       if (e.target.id !== 'trReset') return;
       rows().forEach((a) => { delete a.__trManuale; delete a.__insManuale; });
       ricalcolaTutto();
