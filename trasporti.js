@@ -284,19 +284,26 @@
       if (inp && document.activeElement !== inp) inp.value = fmt(v);
       return true;
     };
+    // on: scrive l'importo calcolato (ricordando quello che c'era prima);
+    // off, o non più calcolabile: rimette il valore di prima nelle righe compilate in automatico
+    const gestisci = (r, on, field, calc, flag, prima) => {
+      const a = r.a;
+      if (on && !a[flag.replace('Auto', 'Manuale')] && calc !== undefined) {
+        if (!a[flag]) a[prima] = num(a[field]);
+        a[flag] = true;
+        return setField(r, field, calc);
+      }
+      if (a[flag]) {
+        const v = num(a[prima]);
+        delete a[flag]; delete a[prima];
+        return setField(r, field, v);
+      }
+      return false;
+    };
     res.righe.forEach((r) => {
       let ch = false;
-      if (S.auto && !r.a.__trManuale) {
-        // importo calcolato; se non è più calcolabile, azzero quello messo in automatico prima
-        const v = r.tr !== undefined ? r.tr : (r.a.__trAuto ? 0 : undefined);
-        ch = setField(r, 'costoTrasporto', v) || ch;
-        if (r.tr !== undefined) r.a.__trAuto = true; else delete r.a.__trAuto;
-      }
-      if (S.inst && !r.a.__insManuale) {
-        const v = r.ins !== undefined ? r.ins : (r.a.__insAuto ? 0 : undefined);
-        ch = setField(r, 'costoInstallazione', v) || ch;
-        if (r.ins !== undefined) r.a.__insAuto = true; else delete r.a.__insAuto;
-      }
+      ch = gestisci(r, S.auto, 'costoTrasporto', r.tr, '__trAuto', '__trPrima') || ch;
+      ch = gestisci(r, S.inst, 'costoInstallazione', r.ins, '__insAuto', '__insPrima') || ch;
       if (ch && typeof aggiornaCalcoliRiga === 'function') aggiornaCalcoliRiga(r.i);
     });
   }
@@ -379,8 +386,8 @@
     if (!(t instanceof HTMLInputElement) || !t.closest('#articoli-table')) return;
     const a = rows()[parseInt(t.dataset.index || '-1', 10)];
     if (!a) return;
-    if (t.dataset.field === 'costoTrasporto') a.__trManuale = true;
-    if (t.dataset.field === 'costoInstallazione') a.__insManuale = true;
+    if (t.dataset.field === 'costoTrasporto') { a.__trManuale = true; delete a.__trAuto; delete a.__trPrima; }
+    if (t.dataset.field === 'costoInstallazione') { a.__insManuale = true; delete a.__insAuto; delete a.__insPrima; }
   }, true);
 
   /* ================= Destinazione: regione, provincia, CAP/comune ================= */
