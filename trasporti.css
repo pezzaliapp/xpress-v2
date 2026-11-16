@@ -22,3 +22,6 @@
 .tr-link{border:0;background:none;color:#1565c0;text-decoration:underline;cursor:pointer;font:inherit;padding:0}
 @media (max-width:520px){.tr-row{grid-template-columns:1fr}}
 @media print{#trasporto-section{display:none!important}}
+.tr-avviso{margin:10px 0 0;padding:8px 12px;border-left:4px solid #e65100;background:#fff4e5;color:#5d3a00;font-size:13px;border-radius:6px}
+.xp-disclaimer{margin:16px 0 0;color:#666;font-size:12px;line-height:1.4}
+@media print{.xp-disclaimer{display:none}}

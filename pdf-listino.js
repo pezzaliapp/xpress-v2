@@ -1288,19 +1288,30 @@
     return parts.join('\n\n') + trailing;
   }
 
+  // Avvertenze in fondo a ogni report (WhatsApp, TXT, stampa/PDF)
+  const AVVERTENZE = [
+    'Nota: trasporto e installazione sono stime indicative e vanno sempre verificati in fase d\'ordine.',
+    'Prezzi, descrizioni e immagini provengono dai listini caricati: eventuali errori o refusi non sono vincolanti.'
+  ];
+  window.XPRESS_AVVERTENZE = AVVERTENZE;
+  function conAvvertenze(report) {
+    if (typeof report !== 'string' || !report.trim()) return report;
+    return report.replace(/\n+$/, '') + '\n\n' + AVVERTENZE.join('\n') + '\n';
+  }
+
   // Avvolge le due funzioni che generano il testo dei report: così WhatsApp, TXT
   // e stampa ricevono le stesse righe opzionali. Con le spunte spente: testo identico.
   function agganciaReport() {
     try {
       if (typeof window.generaReportTesto === 'function' && !window.generaReportTesto.__xp) {
         const orig = window.generaReportTesto;
-        const w = function () { return aggiungiRigheOpzionali(orig.apply(this, arguments), false); };
+        const w = function () { return conAvvertenze(aggiungiRigheOpzionali(orig.apply(this, arguments), false)); };
         w.__xp = true;
         window.generaReportTesto = w;
       }
       if (typeof window.generaReportTestoSenzaMargine === 'function' && !window.generaReportTestoSenzaMargine.__xp) {
         const orig = window.generaReportTestoSenzaMargine;
-        const w = function () { return aggiungiRigheOpzionali(orig.apply(this, arguments), true); };
+        const w = function () { return conAvvertenze(aggiungiRigheOpzionali(orig.apply(this, arguments), true)); };
         w.__xp = true;
         window.generaReportTestoSenzaMargine = w;
       }
