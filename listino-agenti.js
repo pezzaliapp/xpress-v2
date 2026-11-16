@@ -119,7 +119,7 @@
       } catch (_) { /* resta il testo alternativo */ }
     }
     // script: tengo solo quelli dell'app; niente librerie di importazione, benvenuto, preconfiguratore
-    const keep = ['desktop-mode-fix.js', 'pdf-listino.js', 'app.js'];
+    const keep = ['desktop-mode-fix.js', 'pdf-listino.js', 'app.js', 'trasporti-dati.js', 'trasporti-comuni.js', 'trasporti.js'];
     const tags = [...html.matchAll(/<script[^>]*src="([^"]+)"[^>]*><\/script>/gi)];
     for (const m of tags) {
       const src = m[1];

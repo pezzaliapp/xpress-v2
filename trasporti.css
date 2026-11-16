@@ -1,0 +1,24 @@
+/* Xpress · Destinazione e trasporto */
+#trasporto-section label.chk{display:block;margin:6px 0}
+#trasporto-section > label[for="trLuogo"]{display:block;font-weight:600;margin-top:4px}
+.tr-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.tr-row label{display:flex;flex-direction:column;gap:4px;font-weight:600}
+.tr-row select{width:100%}
+.tr-opt{margin:8px 0;border:1px solid #dde3e8;border-radius:10px;padding:8px 12px;background:#fff}
+.tr-opt summary{cursor:pointer;font-weight:600}
+.tr-dis{margin:4px 0 6px 26px}.tr-dis label{display:block;font-size:13px;color:#555}
+.tr-esito{margin-top:10px}
+.tr-tot{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:2px 12px;background:#18222b;color:#fff;border-radius:12px;padding:12px 16px}
+.tr-tot b{font-size:22px}.tr-tot small{grid-column:1/-1;opacity:.75;font-size:12px}
+.tr-lines{border:1px solid #e3e8ec;border-radius:10px;margin:8px 0;padding:4px 12px;background:#fff}
+.tr-ln{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:14px;border-bottom:1px dashed #e3e8ec}
+.tr-ln:last-child{border-bottom:0}
+.tr-ln small{display:block;color:#666;font-size:12px}
+.tr-ln.minor{color:#555;font-size:13px}
+.tr-ln span:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+.tr-hint,.tr-note{color:#555;font-size:13px;margin:6px 0}
+.tr-note.ok{color:#1b6e3a}.tr-note.warn,.tr-warn{color:#b54708;font-size:13px;margin:6px 0}
+.tr-ref{color:#777;font-size:12px;margin:8px 0 0}
+.tr-link{border:0;background:none;color:#1565c0;text-decoration:underline;cursor:pointer;font:inherit;padding:0}
+@media (max-width:520px){.tr-row{grid-template-columns:1fr}}
+@media print{#trasporto-section{display:none!important}}

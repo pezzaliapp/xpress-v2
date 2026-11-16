@@ -43,7 +43,7 @@
     }
   </style>
 
-<meta content="yes" name="apple-mobile-web-app-capable"/><meta content="yes" name="mobile-web-app-capable"/><meta content="default" name="apple-mobile-web-app-status-bar-style"/><meta content="Xpress" name="apple-mobile-web-app-title"/><meta content="telephone=no" name="format-detection"/><link href="icon/CSVXpressSmart-1024.png" rel="apple-touch-icon"/><link href="icon/CSVXpressSmart-192.png" rel="icon" sizes="192x192" type="image/png"/><link href="icon/CSVXpressSmart-512.png" rel="icon" sizes="512x512" type="image/png"/><link href="listino-agenti.css" rel="stylesheet"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/><meta content="yes" name="mobile-web-app-capable"/><meta content="default" name="apple-mobile-web-app-status-bar-style"/><meta content="Xpress" name="apple-mobile-web-app-title"/><meta content="telephone=no" name="format-detection"/><link href="icon/CSVXpressSmart-1024.png" rel="apple-touch-icon"/><link href="icon/CSVXpressSmart-192.png" rel="icon" sizes="192x192" type="image/png"/><link href="icon/CSVXpressSmart-512.png" rel="icon" sizes="512x512" type="image/png"/><link href="listino-agenti.css" rel="stylesheet"/><link href="trasporti.css" rel="stylesheet"/>
 </head>
 <body>
 <header data-zone="header">
@@ -95,6 +95,27 @@
 </div>
 <div class="muted" id="savedPdfInfo" style="opacity:.8; font-size:13px;">Nessun listino PDF caricato.</div>
 </div>
+</section>
+<section data-zone="trasporto" id="trasporto-section">
+<h2>Destinazione e trasporto</h2>
+<p class="muted xp-note">Indica dove va la merce: quando aggiungi un articolo il suo trasporto si calcola da solo (pallet o groupage, la soluzione più conveniente) e compare nella colonna «Trasp.». Puoi sempre correggerlo a mano.</p>
+<label for="trLuogo">CAP o comune</label>
+<input autocomplete="off" enterkeyhint="done" id="trLuogo" placeholder="es. 48022 oppure Lugo" type="text"/>
+<p class="tr-warn" hidden id="trLuogoMsg"></p>
+<div class="tr-row">
+<label>Regione<select id="trReg"></select></label>
+<label>Provincia<select id="trProv"></select></label>
+</div>
+<label class="chk"><input checked id="trAuto" type="checkbox"/> Calcola il trasporto in automatico</label>
+<label class="chk"><input id="trInst" type="checkbox"/> Calcola anche l'installazione in automatico</label>
+<details class="tr-opt" id="trOpt">
+<summary>Servizi di consegna</summary>
+<label class="chk"><input id="trPre" type="checkbox"/> Preavviso telefonico (solo pallet)</label>
+<label class="chk"><input id="trAss" type="checkbox"/> Assicurazione all risk (3% sul trasporto)</label>
+<label class="chk"><input id="trDis" type="checkbox"/> Località disagiata o oltre 30 km dal capoluogo</label>
+<div class="tr-dis" hidden id="trDisRow"><label for="trDisEur">Supplemento (€), se lo conosci</label><input id="trDisEur" inputmode="decimal" placeholder="0" type="text"/></div>
+</details>
+<div aria-live="polite" class="tr-esito" id="trEsito"></div>
 </section>
 <section data-zone="selezione_listino" id="listino-section">
 <h2>Filtra e Seleziona Articolo dal Listino</h2>
@@ -238,6 +259,10 @@
 <!-- App -->
 <script defer="" src="app.js"></script>
 <!-- Listino per gli agenti (preconfiguratore prezzi + HTML offline) -->
+<!-- Destinazione e trasporto: calcolo automatico (dati dell'app Calcolo trasporti) -->
+<script defer="" src="trasporti-dati.js"></script>
+<script defer="" src="trasporti-comuni.js"></script>
+<script defer="" src="trasporti.js"></script>
 <script defer="" src="listino-agenti.js"></script>
 <!-- Benvenuto + recupero listino da CSVXpressSmart (dopo app.js) -->
 <script defer="" src="welcome.js"></script>

@@ -22,6 +22,25 @@ report TXT/WhatsApp), **più il listino PDF con le immagini degli articoli**.
 
 Report WhatsApp e TXT restano solo testo (come nell'originale): le immagini sono nella stampa.
 
+## Destinazione e trasporto automatico
+
+- Riquadro **Destinazione e trasporto** prima della scelta degli articoli: CAP o comune
+  (oppure regione e provincia) e il trasporto di ogni articolo aggiunto si calcola da solo.
+- Stesse regole dell'app [Calcolo trasporti](https://github.com/pezzaliapp/calcolo-trasporti):
+  pallet o groupage, soluzione più conveniente, adeguamento tariffe trasportatori,
+  preavviso, assicurazione all risk, supplemento località disagiata, arrotondamento all'euro.
+- Tutti gli articoli viaggiano in un'unica spedizione: il costo totale viene ripartito
+  sulle righe (colonna «Trasp.», importo unitario) in proporzione al trasporto di ciascuna.
+- Opzionale: **installazione automatica** per categoria di macchina (smontagomme +
+  equilibratrice in coppia a prezzo ridotto), dai costi del configuratore preventivi.
+- I calcoli di Xpress non cambiano: il modulo compila solo i campi Trasp./Inst.
+  Una riga corretta a mano non viene più sovrascritta (pulsante «Ricalcola tutto»).
+- Dati inclusi in `trasporti-dati.js` e `trasporti-comuni.js` (funzionano offline e nel
+  listino agenti). Se l'app Calcolo trasporti è pubblicata sullo stesso sito
+  (`../calcolo-trasporti/`), le tariffe vengono lette da lì, sempre aggiornate.
+- Per rigenerare i dati inclusi:
+  `python3 tools/aggiorna-trasporti.py <cartella calcolo-trasporti> <configuratore-preventivi.html>`
+
 ## Caratteristiche
 
 - **Import CSV o Excel** (.csv, .xlsx, .xlsm, .xls)
