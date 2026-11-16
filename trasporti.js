@@ -220,24 +220,74 @@
 
   /* ================= Righe del preventivo ================= */
   const rows = () => (typeof articoliAggiunti !== 'undefined' && Array.isArray(articoliAggiunti) ? articoliAggiunti : []);
-  function infoCodice(codice) {
+  function perCodice(codice) {
     let c = String(codice == null ? '' : codice).trim();
     if (CODICI[c]) return CODICI[c];
     if (/^\d{5,7}$/.test(c)) { c = c.padStart(8, '0'); if (CODICI[c]) return CODICI[c]; }   // zeri iniziali persi da Excel
     return null;
+  }
+  /* Codice non presente nella tabella (es. listino più nuovo): riconosco il prodotto dalla
+     descrizione, confrontando le parole iniziali con i nomi dell'app Calcolo trasporti
+     («MEC 110BL ESD con freno…» -> «MEC 110B ESD»). La categoria di installazione viene
+     dagli altri codici dello stesso prodotto. */
+  const toks = (t) => String(t || '').toUpperCase().replace(/\(.*?\)/g, ' ').split(/[^A-Z0-9]+/).filter(Boolean);
+  let NOMI = null;
+  function nomi() {
+    if (NOMI) return NOMI;
+    const kPer = {};
+    for (const x of Object.values(CODICI)) if (x.t && x.k) (kPer[x.t] = kPer[x.t] || {})[x.k] = ((kPer[x.t] || {})[x.k] || 0) + 1;
+    NOMI = [];
+    for (const a of D.articoli) for (const v of String(a.nome).split(' / ')) {
+      const t = toks(v.replace(/\bCOD\.?\s*\d+/i, ''));
+      if (t.length < 2 || t.join('').length < 4) continue;
+      const kk = kPer[a.id] ? Object.entries(kPer[a.id]).sort((x, y) => y[1] - x[1])[0][0] : 'nessuna';
+      NOMI.push({ id: a.id, nome: a.nome, t, k: kk });
+    }
+    return NOMI;
+  }
+  const cacheDescr = new Map();
+  function perDescrizione(descr) {
+    const d = toks(descr);
+    if (d.length < 2) return null;
+    const key = d.join(' ');
+    if (cacheDescr.has(key)) return cacheDescr.get(key);
+    let best = null;
+    for (const n of nomi()) {
+      if (n.t.length > d.length) continue;
+      let score = 0, ok = true;
+      for (let i = 0; i < n.t.length && ok; i++) {
+        const a = n.t[i], b = d[i];
+        if (a === b) score += 10;
+        // stessa sigla con una o due lettere in più (110B -> 110BL): stesso imballo
+        else if (i > 0 && /\d/.test(a) && b.startsWith(a) && /^[A-Z]{1,2}$/.test(b.slice(a.length))) score += 6;
+        else ok = false;
+      }
+      if (ok && (!best || score > best.score)) best = { score, n };
+    }
+    const out = best && best.score >= 16 ? { t: best.n.id, k: best.n.k, daDescrizione: best.n.nome } : null;
+    cacheDescr.set(key, out);
+    return out;
+  }
+  function infoArticolo(a) {
+    const c = perCodice(a.codice);
+    if (c && (c.t || c.ti || c.tic || c.tf != null)) return c;
+    const d = perDescrizione(a.descrizione);
+    if (!d) return c;
+    return c ? Object.assign({}, c, { t: d.t, daDescrizione: d.daDescrizione }) : d;   // categoria dal codice, imballo dalla descrizione
   }
   const qtyOf = (a) => Math.max(1, parseInt(a.quantita || 1, 10) || 1);
 
   let LAST = null;
   function calcola() {
     const L = rows();
-    const codes = L.map((a) => (infoCodice(a.codice) ? String(a.codice).trim().padStart(8, '0') : ''));
-    const res = { righe: [], tr: null, cart: [], incl: [], noDati: [], quota: [], inst: [], instNote: [] };
+    const codes = L.map((a) => (perCodice(a.codice) ? String(a.codice).trim().padStart(8, '0') : ''));
+    const res = { righe: [], tr: null, cart: [], incl: [], noDati: [], quota: [], inst: [], instNote: [], daDescr: [] };
     L.forEach((a, i) => {
-      const info = infoCodice(a.codice);
+      const info = infoArticolo(a);
       const r = { i, a, info, tr: undefined, ins: undefined };
       res.righe.push(r);
       if (!info) { res.noDati.push(a); return; }
+      if (info.daDescrizione) res.daDescr.push([a, info.daDescrizione]);
       const incl = info.ti || (info.tic && info.tic.every((c) => codes.includes(c)));
       if (incl) { r.tr = 0; res.incl.push(a); }
       else if (info.tf != null) r.trFisso = num(info.tf);
@@ -365,6 +415,7 @@
       }
       if (R && R.ok) R.notes.forEach((n) => notes.push(['warn', n]));
       if (R) R.infos.forEach((n) => notes.push(['', n]));
+      if (res.daDescr.length) notes.push(['warn', `Codice non presente nella tabella pesi e misure, prodotto riconosciuto dalla descrizione: ${res.daDescr.map(([a, n]) => `${a.codice} → ${n}`).join(', ')}. Verifica che sia corretto.`]);
       if (res.incl.length) notes.push(['ok', `Trasporto incluso per ${res.incl.map(nomeRiga).join(', ')}.`]);
       if (res.quota.length) notes.push(['warn', `Trasporto da chiedere per ${res.quota.map(nomeRiga).join(', ')}: scrivilo a mano nella riga.`]);
       if (res.noDati.length) notes.push(['', `Senza dati di trasporto (accessori o articoli fuori catalogo): ${res.noDati.map(nomeRiga).join(', ')}. Se serve, scrivi il trasporto a mano.`]);
@@ -373,7 +424,7 @@
     if (S.inst && L.length) {
       if (res.coppie) h += `<p class="tr-note ok">Smontagomme + equilibratrice installati in coppia${res.coppie > 1 ? ' × ' + res.coppie : ''}: ${eur(INSTALL.coppia)} la coppia.</p>`;
       if (res.instNote.length) h += `<p class="tr-note warn">Installazione su richiesta per ${res.instNote.map(nomeRiga).join(', ')}.</p>`;
-      if (L.some((a) => { const i = infoCodice(a.codice); return i && i.k === 'colonne'; })) h += '<p class="tr-note ok">Colonne mobili: preinstallazione in Cormach e trasporto inclusi.</p>';
+      if (L.some((a) => { const i = infoArticolo(a); return i && i.k === 'colonne'; })) h += '<p class="tr-note ok">Colonne mobili: preinstallazione in Cormach e trasporto inclusi.</p>';
     }
     const manuali = L.filter((a) => (S.auto && a.__trManuale) || (S.inst && a.__insManuale));
     if (manuali.length) h += `<p class="tr-note">Righe corrette a mano (non ricalcolate): ${manuali.map(nomeRiga).join(', ')}. <button type="button" class="tr-link" id="trReset">Ricalcola tutto</button></p>`;
@@ -526,6 +577,6 @@
     } catch (e) { /* app trasporti non raggiungibile: uso la copia inclusa */ }
   }
 
-  window.XpressTrasporti = { calcola, compute, trovaLuogo, stato: S, ultimo: () => LAST, aggiorna: ricalcolaTutto };
+  window.XpressTrasporti = { calcola, compute, trovaLuogo, perDescrizione, stato: S, ultimo: () => LAST, aggiorna: ricalcolaTutto };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
